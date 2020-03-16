@@ -121,6 +121,7 @@ function restore_backup() {
   add_config_value "DatabaseHost" ${OTRS_DB_HOST}
   add_config_value "DatabasePort" ${OTRS_DB_PORT}
   add_config_value "Database" ${OTRS_DB_NAME}
+  add_config_value "DatabaseDSN" "DBI:Pg:dbname=$Self->{Database};host=$Self->{DatabaseHost};"
 
   #Check first that the backup file exists
   restore_file="${OTRS_BACKUP_DIR}/${OTRS_BACKUP_DATE}"
@@ -228,6 +229,7 @@ function setup_otrs_config() {
   add_config_value "DatabaseHost" ${OTRS_DB_HOST}
   add_config_value "DatabasePort" ${OTRS_DB_PORT}
   add_config_value "Database" ${OTRS_DB_NAME}
+  add_config_value "DatabaseDSN" "DBI:Pg:dbname=$Self->{Database};host=$Self->{DatabaseHost};"
   #Set general configuration values
   [ ! -z "${OTRS_LANGUAGE}" ] && add_config_value "DefaultLanguage" ${OTRS_LANGUAGE}
   [ ! -z "${OTRS_TIMEZONE}" ] && add_config_value "OTRSTimeZone" ${OTRS_TIMEZONE} && add_config_value "UserDefaultTimeZone" ${OTRS_TIMEZONE}
