@@ -23,6 +23,7 @@ RUN yum install -y yum-plugin-fastestmirror && \
     "perl(JSON::XS)" "perl(Mail::IMAPClient)" "perl(PDF::API2)" "perl(DateTime)" \
     "perl(Text::CSV_XS)" "perl(YAML::XS)" "perl(Text::CSV_XS)" "perl(DBD::Pg)" \
     rsyslog supervisor tar which && \
+    yum install -y postgresql && \
     yum install -y http://ftp.otrs.org/pub/otrs/RPMS/rhel/7/otrs-${OTRS_VERSION}.noarch.rpm && \
     /opt/otrs/bin/otrs.CheckModules.pl && \
     yum clean all
