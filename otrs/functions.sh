@@ -95,9 +95,9 @@ export PGPASSWORD="${MYSQL_ROOT_PASSWORD}"
 
 # mysqlcmd="mysql -u${MYSQL_ROOT_USER} -h ${OTRS_DB_HOST} -P ${OTRS_DB_PORT} -p${MYSQL_ROOT_PASSWORD} "
 mysqlcmd="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
-is_ready="/usr/pgsql-9.6/bin/pg_isready -d 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
+is_ready="/usr/pgsql-9.6/bin/pg_isready -d 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}' "
 echo $mysqlcmd
-mysqlcmdnodb="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}'"
+mysqlcmdnodb="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}' "
 echo $mysqlcmdnodb
 is_alive="/usr/pgsql-9.6/bin/pg_isready -U ${OTRS_DB_USER} -h ${OTRS_DB_HOST} -p ${OTRS_DB_PORT}"
 
@@ -114,6 +114,7 @@ function wait_for_db() {
 
 function create_db() {
   print_info "Creating OTRS database..."
+  echo $mysqlcmdnodb -c "SELECT 1 FROM pg_database WHERE datname = '${OTRS_DB_NAME}'"
   $mysqlcmdnodb -c "SELECT 1 FROM pg_database WHERE datname = '${OTRS_DB_NAME}'" | grep -q 1
   if [ $? -gt 0 ]; then
     print_info "Database doesn't exist yet, creating!"
