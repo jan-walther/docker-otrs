@@ -94,8 +94,10 @@ OTRS_DISABLE_EMAIL_FETCH="${OTRS_DISABLE_EMAIL_FETCH:-no}"
 export PGPASSWORD="${MYSQL_ROOT_PASSWORD}"
 
 # mysqlcmd="mysql -u${MYSQL_ROOT_USER} -h ${OTRS_DB_HOST} -P ${OTRS_DB_PORT} -p${MYSQL_ROOT_PASSWORD} "
-mysqlcmd="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}'"
+mysqlcmd="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
+is_ready="pg_isready -d 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
 
+mysqlcmdnodb="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}'"
 function wait_for_db() {
   while [ ! "$(pg_isready -U ${OTRS_DB_USER} -h ${OTRS_DB_HOST} -p ${OTRS_DB_PORT})" ]; do
     print_info "Database server is not available. Waiting ${WAIT_TIMEOUT} seconds..."
@@ -106,7 +108,7 @@ function wait_for_db() {
 
 function create_db() {
   print_info "Creating OTRS database..."
-  $mysqlcmd -c "CREATE DATABASE IF NOT EXISTS ${OTRS_DB_NAME};"
+  $mysqlcmdnodb -c "CREATE DATABASE IF NOT EXISTS ${OTRS_DB_NAME};"
   [ $? -gt 0 ] && print_error "Couldn't create OTRS database !!" && exit 1
   $mysqlcmd -c " GRANT ALL ON ${OTRS_DB_NAME}.* to '${OTRS_DB_USER}'@'%' identified by '${OTRS_DB_PASSWORD}'";
   [ $? -gt 0 ] && print_error "Couldn't create database user !!" && exit 1
@@ -262,7 +264,7 @@ function load_defaults() {
   setup_otrs_config
 
   #Check if database doesn't exists yet (it could if this is a container redeploy)
-  $mysqlcmd -e "use ${OTRS_DB_NAME}"
+  $is_ready
   if [ $? -gt 0 ]; then
     create_db
 
@@ -300,14 +302,14 @@ function set_skins() {
     # Remove AgentLogo option to disable default logo so the skin one is picked up
     sed -i '/AgentLogo/,/;/d' ${OTRS_CONFIG_DIR}/Config/Files/ZZZAAuto.pm
     # Also disable default value of sysconfig so XML/Framework.xml AgentLogo is valid=0
-    $mysqlcmd -e "UPDATE sysconfig_default SET is_valid = 0 WHERE name = 'AgentLogo'" otrs
+    $mysqlcmd -c "UPDATE sysconfig_default SET is_valid = 0 WHERE name = 'AgentLogo'" otrs
   fi
   [ ! -z ${OTRS_AGENT_SKIN} ] &&  add_config_value "Loader::Customer::SelectedSkin" ${OTRS_CUSTOMER_SKIN}
 }
 
 function set_users_skin() {
   print_info "Updating default skin for users in backup..."
-  $mysqlcmd -e "UPDATE user_preferences SET preferences_value = '${OTRS_AGENT_SKIN}' WHERE preferences_key = 'UserSkin'" otrs
+  $mysqlcmd -c "UPDATE user_preferences SET preferences_value = '${OTRS_AGENT_SKIN}' WHERE preferences_key = 'UserSkin'" otrs
   [ $? -gt 0 ] && print_error "Couldn't change default skin for existing users !!\n"
 }
 
@@ -422,7 +424,7 @@ function start_all_services () {
 
 function fix_database_upgrade() {
   print_info "[*] Running database pre-upgrade scripts..." | tee -a ${upgrade_log}
-  $mysqlcmd -e "use ${OTRS_DB_NAME}"
+  $is_ready
   if [ $? -eq 0  ]; then
     sql_files="$(ls ${OTRS_UPGRADE_SQL_FILES/*.sql})"
 
@@ -447,7 +449,7 @@ function fix_database_upgrade() {
 function upgrade_database() {
   # Upgrade database
   print_info "[*] Doing database migration..." | tee -a ${upgrade_log}
-  $mysqlcmd -e "use ${OTRS_DB_NAME}"
+  $is_ready
   if [ $? -eq 0  ]; then
     su -c "/opt/otrs//scripts/DBUpdate-to-6.pl" -s /bin/bash otrs | tee -a ${upgrade_log}
     if [ $? -gt 0  ]; then
