@@ -11,7 +11,7 @@ services:
     #  expose:
     #  - "80"
     depends_on:
-      - mariadb
+      - postgres
       - postfix
     env_file: .env
     volumes:
@@ -23,14 +23,13 @@ services:
       - './volumes/addons:/opt/otrs/addons'
       - ./volumes/db_upgrade:/opt/otrs/db_upgrade
       - '/etc/localtime:/etc/localtime:ro'
-  mariadb:
-    image: juanluisbaptiste/otrs-mariadb:latest
-    build: mariadb
+  postgres:
+    image: postgres:9.6.17
     expose:
-      - "3306"
+      - "5432"
     env_file: .env
     volumes:
-      - './volumes/mysql:/var/lib/mysql'
+      - './volumes/postgresql:/var/lib/postgresql/data'
       - '/etc/localtime:/etc/localtime:ro'
   postfix:
     image: juanluisbaptiste/postfix:latest

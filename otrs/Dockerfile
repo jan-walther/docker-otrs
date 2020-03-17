@@ -49,6 +49,8 @@ RUN chmod 755 /*.sh  && \
     perl -cw ${OTRS_ROOT}bin/cgi-bin/customer.pl && \
     perl -cw ${OTRS_ROOT}bin/otrs.Console.pl && \
     sed -i -e '/\$ModLoad imjournal/ s/^#*/#/' /etc/rsyslog.conf && \
+    sed -i "s/#use DBD::Pg/use DBD::Pg/" /opt/otrs/scripts/apache2-perl-startup.pl && \
+    sed -i "s/#use Kernel::System::DB::postgresql/use Kernel::System::DB::postgresql/" /opt/otrs/scripts/apache2-perl-startup.pl && \
     sed -i -e '/\$IMJournalStateFile imjournal.state/ s/^#*/#/' /etc/rsyslog.conf && \
     sed -i 's/\(^\$OmitLocalLogging \).*/\1off/' /etc/rsyslog.conf && \
     rm /etc/rsyslog.d/listen.conf
