@@ -95,8 +95,7 @@ OTRS_DISABLE_EMAIL_FETCH="${OTRS_DISABLE_EMAIL_FETCH:-no}"
 mysqlcmd="mysql -u${MYSQL_ROOT_USER} -h ${OTRS_DB_HOST} -P ${OTRS_DB_PORT} -p${MYSQL_ROOT_PASSWORD} "
 
 function wait_for_db() {
-  while [ ! "$(mysqladmin ping -h ${OTRS_DB_HOST} -P ${OTRS_DB_PORT} -u ${MYSQL_ROOT_USER} \
-              --password="${MYSQL_ROOT_PASSWORD}" --silent --connect_timeout=3)" ]; do
+  while [ ! "$(pg_isready -U ${OTRS_DB_USER} -h ${OTRS_DB_HOST} -p ${OTRS_DB_PORT})" ]; do
     print_info "Database server is not available. Waiting ${WAIT_TIMEOUT} seconds..."
     sleep ${WAIT_TIMEOUT}
   done
