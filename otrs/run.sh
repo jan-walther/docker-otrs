@@ -63,7 +63,6 @@ if [ "${OTRS_INSTALL}" != "yes" ]; then
   set_skins
 else
   #If neither of previous cases is true the installer will be run.
-  create_db
   print_info "Starting \e[${OTRS_ASCII_COLOR_BLUE}m OTRS $OTRS_VERSION \e[0minstaller !!"
   check_host_mount_dir
   ${OTRS_ROOT}bin/otrs.SetPermissions.pl --otrs-user=otrs --web-group=apache ${OTRS_ROOT}

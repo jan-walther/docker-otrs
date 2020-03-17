@@ -48,6 +48,7 @@ RUN chmod 755 /*.sh  && \
     perl -cw ${OTRS_ROOT}bin/cgi-bin/index.pl && \
     perl -cw ${OTRS_ROOT}bin/cgi-bin/customer.pl && \
     perl -cw ${OTRS_ROOT}bin/otrs.Console.pl && \
+    echo "Compiles!" && \
     sed -i -e '/\$ModLoad imjournal/ s/^#*/#/' /etc/rsyslog.conf && \
     sed -i "s/#use DBD::Pg/use DBD::Pg/" /opt/otrs/scripts/apache2-perl-startup.pl && \
     sed -i "s/#use Kernel::System::DB::postgresql/use Kernel::System::DB::postgresql/" /opt/otrs/scripts/apache2-perl-startup.pl && \

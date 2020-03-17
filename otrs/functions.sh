@@ -98,7 +98,7 @@ export PGPASSWORD="${MYSQL_ROOT_PASSWORD}"
 is_ready="/usr/pgsql-9.6/bin/pg_isready -d 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}' "
 mysqlcmdnodb="psql -p ${OTRS_DB_PORT} -h ${OTRS_DB_HOST} -U ${MYSQL_ROOT_USER} "
 mysqlcmd="${mysqlcmdnodb} -d ${OTRS_DB_NAME} "
-
+mysqlcmduser="psql --quiet -p ${OTRS_DB_PORT} -h ${OTRS_DB_HOST} -U ${OTRS_DB_USER} -d ${OTRS_DB_NAME} "
 echo $mysqlcmdnodb
 echo $mysqlcmd
 
@@ -116,29 +116,25 @@ function wait_for_db() {
 }
 
 function create_db() {
-  print_info "Creating OTRS database..."
-  $mysqlcmdnodb -tc "SELECT 1 FROM pg_database WHERE datname = '${OTRS_DB_NAME}'" | grep -q 1
-  if [ $? -gt 0 ]; then
-    print_info "Database doesn't exist yet, creating!"
-    $mysqlcmdnodb -c "CREATE DATABASE ${OTRS_DB_NAME}"
-    [ $? -gt 0 ] && print_error "Couldn't create OTRS database !!" && exit 1    
-  else
-    print_info "Database already exists..."
-  fi
-
   print_info "Creating OTRS user..."
-
   $mysqlcmdnodb -tc "SELECT 1 FROM pg_user WHERE usename = '${OTRS_DB_USER}'" | grep -q 1
   if [ $? -gt 0 ]; then
     print_info "User does not exist yet!"
-    $mysqlcmdnodb -tc "CREATE ROLE ${OTRS_DB_USER} LOGIN PASSWORD '${OTRS_DB_PASSWORD}';"
+    $mysqlcmdnodb -tc "CREATE USER ${OTRS_DB_USER} PASSWORD '${OTRS_DB_PASSWORD}' NOSUPERUSER;"
     [ $? -gt 0 ] && print_error "Couldn't create database user !!" && exit 1
-    $mysqlcmdnodb -tc "grant all privileges on database ${OTRS_DB_NAME} to ${OTRS_DB_USER};"
-    [ $? -gt 0 ] && print_error "Couldn't grant privileges to database user !!" && exit 1
   else
     print_info "User exists already!"
   fi
 
+  print_info "Creating OTRS database..."
+  $mysqlcmdnodb -tc "SELECT 1 FROM pg_database WHERE datname = '${OTRS_DB_NAME}'" | grep -q 1
+  if [ $? -gt 0 ]; then
+    print_info "Database doesn't exist yet, creating!"
+    $mysqlcmdnodb -c "CREATE DATABASE ${OTRS_DB_NAME} OWNER ${OTRS_DB_USER}"
+    [ $? -gt 0 ] && print_error "Couldn't create OTRS database !!" && exit 1
+  else
+    print_info "Database already exists..."
+  fi
 }
 
 function restore_backup() {
@@ -291,24 +287,21 @@ function load_defaults() {
   setup_otrs_config
 
   #Check if database doesn't exists yet (it could if this is a container redeploy)
-  $is_ready
-  if [ $? -gt 0 ]; then
+
+  if $mysqlcmdnodb -lqt | cut -d \| -f 1 | grep -qw ${OTRS_DB_NAME}; then
+    print_warning "otrs database already exists, Ok."
+  else
     create_db
 
     #Check that a backup isn't being restored
     if [ "$OTRS_INSTALL" == "no" ]; then
       print_info "Loading default db schemas..."
-      $mysqlcmd ${OTRS_DB_NAME} < ${OTRS_ROOT}scripts/database/otrs-schema.mysql.sql
-      [ $? -gt 0 ] && print_error "\n\e[1;31mERROR:\e[0m Couldn't load otrs-schema.mysql.sql schema !!\n" && exit 1
-      print_info "Loading initial db inserts..."
-      $mysqlcmd ${OTRS_DB_NAME} < ${OTRS_ROOT}scripts/database/otrs-initial_insert.mysql.sql
-      [ $? -gt 0 ] && print_error "\n\e[1;31mERROR:\e[0m Couldn't load OTRS database initial inserts !!\n" && exit 1
-      print_info "Loading initial schema constraints..."
-      $mysqlcmd ${OTRS_DB_NAME} < ${OTRS_ROOT}scripts/database/otrs-schema-post.mysql.sql
-      [ $? -gt 0 ] && print_error "\n\e[1;31mERROR:\e[0m Couldn't load otrs-schema-post.mysql.sql schema !!\n" && exit 1
+      export PGPASSWORD="${OTRS_DB_PASSWORD}"
+      $mysqlcmduser -w -f /opt/otrs/scripts/database/otrs-schema.postgresql.sql
+      $mysqlcmduser -w -f /opt/otrs/scripts/database/otrs-initial_insert.postgresql.sql
+      $mysqlcmduser -w -f /opt/otrs/scripts/database/otrs-schema-post.postgresql.sql
+      export PGPASSWORD="${MYSQL_ROOT_PASSWORD}"
     fi
-  else
-    print_warning "otrs database already exists, Ok."
   fi
 }
 
