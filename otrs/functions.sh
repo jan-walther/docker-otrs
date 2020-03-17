@@ -283,8 +283,7 @@ function load_defaults() {
   #container
   check_host_mount_dir
   check_custom_skins_dir
-  #Setup OTRS configuration
-  setup_otrs_config
+
 
   #Check if database doesn't exists yet (it could if this is a container redeploy)
 
@@ -292,7 +291,7 @@ function load_defaults() {
     print_warning "otrs database already exists, Ok."
   else
     create_db
-
+ 
     #Check that a backup isn't being restored
     if [ "$OTRS_INSTALL" == "no" ]; then
       print_info "Loading default db schemas..."
@@ -302,6 +301,9 @@ function load_defaults() {
       $mysqlcmduser -w -f /opt/otrs/scripts/database/otrs-schema-post.postgresql.sql
       export PGPASSWORD="${MYSQL_ROOT_PASSWORD}"
     fi
+
+    #Setup OTRS configuration
+    setup_otrs_config
   fi
 }
 
@@ -593,7 +595,7 @@ function switch_article_storage_type() {
 
     current_type=$(su -c "${OTRS_ROOT}bin/otrs.Console.pl Admin::Config::Read --setting-name Ticket::Article::Backend::MIMEBase::ArticleStorage" -s /bin/bash otrs|grep Kernel|cut -d':' -f 13)
 
-    if [ ${current_type} != ${OTRS_ARTICLE_STORAGE_TYPE} ];then
+    if [ "${current_type}" != ${OTRS_ARTICLE_STORAGE_TYPE} ];then
       su -c "${OTRS_ROOT}bin/otrs.Console.pl Admin::Config::Update --setting-name Ticket::Article::Backend::MIMEBase::ArticleStorage --value Kernel::System::Ticket::Article::Backend::MIMEBase::${OTRS_ARTICLE_STORAGE_TYPE}" -s /bin/bash otrs
       if [ $? -eq 0 ]; then
         if [ "${OTRS_ARTICLE_STORAGE_TYPE}" == "ArticleStorageFS" ]; then
