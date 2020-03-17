@@ -96,7 +96,7 @@ export PGPASSWORD="${MYSQL_ROOT_PASSWORD}"
 # mysqlcmd="mysql -u${MYSQL_ROOT_USER} -h ${OTRS_DB_HOST} -P ${OTRS_DB_PORT} -p${MYSQL_ROOT_PASSWORD} "
 mysqlcmd="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
 is_ready="/usr/pgsql-9.6/bin/pg_isready -d 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
-
+echo $mysqlcmd
 mysqlcmdnodb="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}'"
 function wait_for_db() {
   while [ ! $(/usr/pgsql-9.6/bin/pg_isready -U ${OTRS_DB_USER} -h ${OTRS_DB_HOST} -p ${OTRS_DB_PORT}) ]; do
@@ -109,6 +109,7 @@ function wait_for_db() {
 function create_db() {
   print_info "Creating OTRS database..."
   $mysqlcmdnodb -c "CREATE DATABASE IF NOT EXISTS ${OTRS_DB_NAME};"
+  mysqlcmdnodb -c "SELECT 1 FROM pg_database WHERE datname = '${OTRS_DB_NAME}'" | grep -q 1 || $mysqlcmdnodb -c "CREATE DATABASE ${OTRS_DB_NAME}"
   [ $? -gt 0 ] && print_error "Couldn't create OTRS database !!" && exit 1
   $mysqlcmd -c " GRANT ALL ON ${OTRS_DB_NAME}.* to '${OTRS_DB_USER}'@'%' identified by '${OTRS_DB_PASSWORD}'";
   [ $? -gt 0 ] && print_error "Couldn't create database user !!" && exit 1
