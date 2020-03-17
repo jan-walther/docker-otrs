@@ -111,11 +111,12 @@ function wait_for_db() {
 function create_db() {
   print_info "Creating OTRS database..."
   $mysqlcmdnodb -c "SELECT 1 FROM pg_database WHERE datname = '${OTRS_DB_NAME}'" | grep -q 1
-  if [ $? -gt 0 ]; then 
+  if [ $? -gt 0 ]; then
+    print_info "Database doesn't exist yet, creating!"
     $mysqlcmdnodb -c "CREATE DATABASE ${OTRS_DB_NAME}"
     [ $? -gt 0 ] && print_error "Couldn't create OTRS database !!" && exit 1    
   else
-    print_ingo "Database already exists..."
+    print_info "Database already exists..."
   fi
 
   print_info "Creating OTRS user..."
