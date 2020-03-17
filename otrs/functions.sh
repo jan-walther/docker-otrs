@@ -91,8 +91,10 @@ OTRS_DISABLE_EMAIL_FETCH="${OTRS_DISABLE_EMAIL_FETCH:-no}"
 [ -z "${OTRS_BACKUP_TIME}" ] && print_info "\e[${OTRS_ASCII_COLOR_BLUE}mOTRS_BACKUP_TIME\e[0m not set, setting value to \e[${OTRS_ASCII_COLOR_RED}m${DEFAULT_OTRS_BACKUP_TIME}\e[0m" && OTRS_BACKUP_TIME=${DEFAULT_OTRS_BACKUP_TIME}
 [ ! -z "${OTRS_CRON_BACKUP_SCRIPT}" ] && print_info "\e[${OTRS_ASCII_COLOR_BLUE}mSetting OTRS_CRON_BACKUP_SCRIPT\e[0m to \e[${OTRS_ASCII_COLOR_RED}m${OTRS_CRON_BACKUP_SCRIPT}\e[0m"
 [ ! -z "${OTRS_ARTICLE_STORAGE_TYPE}" ] && print_info "\e[${OTRS_ASCII_COLOR_BLUE}mSetting OTRS_ARTICLE_STORAGE_TYPE\e[0m to \e[${OTRS_ASCII_COLOR_RED}m${OTRS_ARTICLE_STORAGE_TYPE}\e[0m"
+export PGPASSWORD="${MYSQL_ROOT_PASSWORD}"
 
-mysqlcmd="mysql -u${MYSQL_ROOT_USER} -h ${OTRS_DB_HOST} -P ${OTRS_DB_PORT} -p${MYSQL_ROOT_PASSWORD} "
+# mysqlcmd="mysql -u${MYSQL_ROOT_USER} -h ${OTRS_DB_HOST} -P ${OTRS_DB_PORT} -p${MYSQL_ROOT_PASSWORD} "
+mysqlcmd="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}'"
 
 function wait_for_db() {
   while [ ! "$(pg_isready -U ${OTRS_DB_USER} -h ${OTRS_DB_HOST} -p ${OTRS_DB_PORT})" ]; do
@@ -104,9 +106,9 @@ function wait_for_db() {
 
 function create_db() {
   print_info "Creating OTRS database..."
-  $mysqlcmd -e "CREATE DATABASE IF NOT EXISTS ${OTRS_DB_NAME};"
+  $mysqlcmd -c "CREATE DATABASE IF NOT EXISTS ${OTRS_DB_NAME};"
   [ $? -gt 0 ] && print_error "Couldn't create OTRS database !!" && exit 1
-  $mysqlcmd -e " GRANT ALL ON ${OTRS_DB_NAME}.* to '${OTRS_DB_USER}'@'%' identified by '${OTRS_DB_PASSWORD}'";
+  $mysqlcmd -c " GRANT ALL ON ${OTRS_DB_NAME}.* to '${OTRS_DB_USER}'@'%' identified by '${OTRS_DB_PASSWORD}'";
   [ $? -gt 0 ] && print_error "Couldn't create database user !!" && exit 1
 }
 
