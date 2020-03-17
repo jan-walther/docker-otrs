@@ -14,6 +14,9 @@ ENV LANGUAGE=en_US.UTF-8
 RUN yum install -y yum-plugin-fastestmirror && \
     yum install -y epel-release && \
     yum update -y && \
+    sed "s/^\[updates\]/\[updates\]\nexclude=postgresql*/" /etc/yum.repos.d/CentOS-Base.repo && \
+    sed "s/^\[base\]/\[base\]\nexclude=postgresql*/" /etc/yum.repos.d/CentOS-Base.repo && \
+    yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm && \
     yum -y install bzip2 cronie httpd mysql mod_perl \
     perl-core "perl(Crypt::SSLeay)" "perl(Net::LDAP)" "perl(URI)" \
     procmail "perl(Date::Format)" "perl(LWP::UserAgent)" \
