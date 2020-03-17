@@ -98,6 +98,7 @@ mysqlcmd="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB
 is_ready="/usr/pgsql-9.6/bin/pg_isready -d 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
 echo $mysqlcmd
 mysqlcmdnodb="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}'"
+echo $mysqlcmdnodb
 is_alive="/usr/pgsql-9.6/bin/pg_isready -U ${OTRS_DB_USER} -h ${OTRS_DB_HOST} -p ${OTRS_DB_PORT}"
 
 psql --version
