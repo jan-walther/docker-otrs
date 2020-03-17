@@ -110,9 +110,14 @@ function wait_for_db() {
 
 function create_db() {
   print_info "Creating OTRS database..."
-  $mysqlcmdnodb -c "SELECT 1 FROM pg_database WHERE datname = '${OTRS_DB_NAME}'" | grep -q 1 || $mysqlcmdnodb -c "CREATE DATABASE ${OTRS_DB_NAME}"
-  [ $? -gt 0 ] && print_error "Couldn't create OTRS database !!" && exit 1
-  print_info "Done"
+  $mysqlcmdnodb -c "SELECT 1 FROM pg_database WHERE datname = '${OTRS_DB_NAME}'" | grep -q 1
+  if [ $? -gt 0 ]; then 
+    $mysqlcmdnodb -c "CREATE DATABASE ${OTRS_DB_NAME}"
+    [ $? -gt 0 ] && print_error "Couldn't create OTRS database !!" && exit 1    
+  else
+    print_ingo "Database already exists..."
+  fi
+
   print_info "Creating OTRS user..."
   $mysqlcmd -c " GRANT ALL ON ${OTRS_DB_NAME}.* to '${OTRS_DB_USER}'@'%' identified by '${OTRS_DB_PASSWORD}'";
   [ $? -gt 0 ] && print_error "Couldn't create database user !!" && exit 1
