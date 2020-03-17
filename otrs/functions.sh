@@ -95,11 +95,11 @@ export PGPASSWORD="${MYSQL_ROOT_PASSWORD}"
 
 # mysqlcmd="mysql -u${MYSQL_ROOT_USER} -h ${OTRS_DB_HOST} -P ${OTRS_DB_PORT} -p${MYSQL_ROOT_PASSWORD} "
 mysqlcmd="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
-is_ready="pg_isready -d 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
+is_ready="/usr/pgsql-9.6/bin/pg_isready -d 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}/${OTRS_DB_NAME}'"
 
 mysqlcmdnodb="psql 'postgresql://${MYSQL_ROOT_USER}:${MYSQL_ROOT_PASSWORD}@${OTRS_DB_HOST}:${OTRS_DB_PORT}'"
 function wait_for_db() {
-  while [ ! "$(pg_isready -U ${OTRS_DB_USER} -h ${OTRS_DB_HOST} -p ${OTRS_DB_PORT})" ]; do
+  while [ ! $(/usr/pgsql-9.6/bin/pg_isready -U ${OTRS_DB_USER} -h ${OTRS_DB_HOST} -p ${OTRS_DB_PORT}) ]; do
     print_info "Database server is not available. Waiting ${WAIT_TIMEOUT} seconds..."
     sleep ${WAIT_TIMEOUT}
   done
